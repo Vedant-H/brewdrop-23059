@@ -34,9 +34,9 @@ const OrderTracking = () => {
     if (ordersData && user) {
       const allOrders = JSON.parse(ordersData);
       
-      // Filter orders for current user only (and only approved orders)
+      // Filter orders for current user only
       const currentUserOrders = allOrders.filter(
-        (o: Order) => o.userId === user.id && o.approved === true
+        (o: Order & { userId: string }) => o.userId === user.id
       );
       setUserOrders(currentUserOrders);
 

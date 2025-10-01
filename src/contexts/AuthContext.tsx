@@ -5,7 +5,6 @@ interface User {
   email: string;
   name: string;
   createdAt: string;
-  isAdmin?: boolean;
 }
 
 interface AuthContextType {
@@ -75,20 +74,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // Check for admin credentials first
-    if (email === "admin@gmail.com" && password === "admin") {
-      const adminUser: User = {
-        id: "admin",
-        email: "admin@gmail.com",
-        name: "Admin",
-        createdAt: new Date().toISOString(),
-        isAdmin: true,
-      };
-      setUser(adminUser);
-      localStorage.setItem("currentUser", JSON.stringify(adminUser));
-      return true;
-    }
-
     // Get users from localStorage (simulating users.json)
     const usersData = localStorage.getItem("users");
     const users = usersData ? JSON.parse(usersData) : [];

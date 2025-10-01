@@ -15,13 +15,10 @@ export interface CartItem extends CoffeeItem {
 
 export interface Order {
   id: string;
-  userId: string;
-  userEmail: string;
   items: CartItem[];
   total: number;
   status: "brewing" | "packed" | "delivery" | "delivered";
   createdAt: Date;
   address: string;
   phone: string;
-  approved: boolean;
 }

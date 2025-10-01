@@ -48,11 +48,10 @@ const Checkout = () => {
       userEmail: user.email,
       items: cartItems,
       total: cartTotal,
-      status: "brewing" as const,
+      status: "brewing",
       createdAt: new Date().toISOString(),
       address,
       phone,
-      approved: false,
     };
 
     // Get existing orders from localStorage (simulating orders.json)
