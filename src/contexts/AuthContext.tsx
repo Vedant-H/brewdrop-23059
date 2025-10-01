@@ -5,6 +5,7 @@ interface User {
   email: string;
   name: string;
   createdAt: string;
+  isAdmin?: boolean;
 }
 
 interface AuthContextType {
@@ -51,6 +52,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       return false; // User already exists
     }
 
+    // Determine if this is the admin user
+    const isAdmin = email === "admin@gmail.com";
+
     // Create new user
     const newUser: User & { password: string } = {
       id: Math.random().toString(36).substring(7),
@@ -58,6 +62,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       name,
       password, // In production, this should be hashed
       createdAt: new Date().toISOString(),
+      isAdmin,
     };
 
     // Save to users array
@@ -79,8 +84,22 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const users = usersData ? JSON.parse(usersData) : [];
 
     // Find user with matching credentials
-    const user = users.find((u: any) => u.email === email && u.password === password);
-    
+    let user = users.find((u: any) => u.email === email && u.password === password);
+
+    // If admin is logging in and not present in users, auto-create admin
+    if (!user && email === "admin@gmail.com" && password === "admin") {
+      user = {
+        id: "admin",
+        email: "admin@gmail.com",
+        name: "Admin",
+        password: "admin",
+        createdAt: new Date().toISOString(),
+        isAdmin: true,
+      };
+      users.push(user);
+      localStorage.setItem("users", JSON.stringify(users));
+    }
+
     if (!user) {
       return false; // Invalid credentials
     }

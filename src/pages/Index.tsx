@@ -6,6 +6,7 @@ import { CoffeeCard } from "@/components/coffee/CoffeeCard";
 import { coffeeItems } from "@/data/coffeeData";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { StaticChatbot } from "@/components/StaticChatbot";
 
 const Index = () => {
   const featuredItems = coffeeItems.filter((item) => item.featured);
