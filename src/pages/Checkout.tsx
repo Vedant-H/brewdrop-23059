@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -7,14 +7,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { CheckCircle2 } from "lucide-react";
 
 const Checkout = () => {
   const navigate = useNavigate();
   const { cartItems, cartTotal, clearCart } = useCart();
+  const { user, isAuthenticated } = useAuth();
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      toast.error("Please login to checkout");
+      navigate("/login");
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,20 +34,34 @@ const Checkout = () => {
       return;
     }
 
-    // Mock order creation
+    if (!user) {
+      toast.error("Please login to place order");
+      navigate("/login");
+      return;
+    }
+
+    // Create order with user association
     const orderId = Math.random().toString(36).substring(7);
-    localStorage.setItem(
-      "currentOrder",
-      JSON.stringify({
-        id: orderId,
-        items: cartItems,
-        total: cartTotal,
-        status: "brewing",
-        createdAt: new Date(),
-        address,
-        phone,
-      })
-    );
+    const order = {
+      id: orderId,
+      userId: user.id,
+      userEmail: user.email,
+      items: cartItems,
+      total: cartTotal,
+      status: "brewing",
+      createdAt: new Date().toISOString(),
+      address,
+      phone,
+    };
+
+    // Get existing orders from localStorage (simulating orders.json)
+    const ordersData = localStorage.getItem("orders");
+    const orders = ordersData ? JSON.parse(ordersData) : [];
+    orders.push(order);
+    localStorage.setItem("orders", JSON.stringify(orders));
+
+    // Also set current order for tracking page
+    localStorage.setItem("currentOrder", JSON.stringify(order));
 
     clearCart();
     toast.success("Order placed successfully!");

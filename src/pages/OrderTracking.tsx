@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Coffee, Package, Truck, CheckCircle2 } from "lucide-react";
 import { Order } from "@/types/coffee";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const statusSteps = [
   { key: "brewing", label: "Brewing", icon: Coffee },
@@ -13,35 +16,61 @@ const statusSteps = [
 ] as const;
 
 const OrderTracking = () => {
+  const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
   const [order, setOrder] = useState<Order | null>(null);
+  const [userOrders, setUserOrders] = useState<Order[]>([]);
 
   useEffect(() => {
-    const stored = localStorage.getItem("currentOrder");
-    if (stored) {
-      const orderData = JSON.parse(stored);
-      setOrder(orderData);
-
-      // Simulate status progression
-      const timer = setInterval(() => {
-        setOrder((prev) => {
-          if (!prev) return null;
-
-          const currentIndex = statusSteps.findIndex(
-            (s) => s.key === prev.status
-          );
-          if (currentIndex < statusSteps.length - 1) {
-            return {
-              ...prev,
-              status: statusSteps[currentIndex + 1].key,
-            };
-          }
-          return prev;
-        });
-      }, 5000);
-
-      return () => clearInterval(timer);
+    // Redirect to login if not authenticated
+    if (!isAuthenticated) {
+      toast.error("Please login to view orders");
+      navigate("/login");
+      return;
     }
-  }, []);
+
+    // Get all orders from localStorage (simulating orders.json)
+    const ordersData = localStorage.getItem("orders");
+    if (ordersData && user) {
+      const allOrders = JSON.parse(ordersData);
+      
+      // Filter orders for current user only
+      const currentUserOrders = allOrders.filter(
+        (o: Order & { userId: string }) => o.userId === user.id
+      );
+      setUserOrders(currentUserOrders);
+
+      // Set the most recent order as current order
+      if (currentUserOrders.length > 0) {
+        const latestOrder = currentUserOrders[currentUserOrders.length - 1];
+        setOrder(latestOrder);
+      }
+    }
+  }, [user, isAuthenticated, navigate]);
+
+  useEffect(() => {
+    if (!order) return;
+
+    // Simulate status progression
+    const timer = setInterval(() => {
+      setOrder((prev) => {
+        if (!prev) return null;
+
+        const currentIndex = statusSteps.findIndex(
+          (s) => s.key === prev.status
+        );
+        if (currentIndex < statusSteps.length - 1) {
+          return {
+            ...prev,
+            status: statusSteps[currentIndex + 1].key,
+          };
+        }
+        return prev;
+      });
+    }, 5000);
+
+    return () => clearInterval(timer);
+  }, [order]);
 
   if (!order) {
     return (
@@ -53,7 +82,9 @@ const OrderTracking = () => {
               No Active Order
             </h2>
             <p className="text-muted-foreground">
-              You don't have any orders to track right now
+              {userOrders.length > 0 
+                ? "You don't have any active orders right now" 
+                : "You haven't placed any orders yet"}
             </p>
           </Card>
         </main>
@@ -80,6 +111,14 @@ const OrderTracking = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-2 text-sm">
+                <p>
+                  <span className="text-muted-foreground">Customer:</span>{" "}
+                  {user?.name}
+                </p>
+                <p>
+                  <span className="text-muted-foreground">Email:</span>{" "}
+                  {user?.email}
+                </p>
                 <p>
                   <span className="text-muted-foreground">Delivering to:</span>{" "}
                   {order.address}

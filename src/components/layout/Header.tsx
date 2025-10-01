@@ -1,17 +1,27 @@
-import { Link, useLocation } from "react-router-dom";
-import { ShoppingCart, User, Coffee } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { ShoppingCart, User, Coffee, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { Cart } from "@/components/cart/Cart";
+import { toast } from "sonner";
 
 export const Header = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { cartCount } = useCart();
+  const { user, logout, isAuthenticated } = useAuth();
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   const isActive = (path: string) => location.pathname === path;
+
+  const handleLogout = () => {
+    logout();
+    toast.success("Logged out successfully");
+    navigate("/");
+  };
 
   return (
     <>
@@ -65,11 +75,25 @@ export const Header = () => {
                 </Badge>
               )}
             </Button>
-            <Link to="/account">
-              <Button variant="ghost" size="icon">
-                <User className="h-5 w-5" />
-              </Button>
-            </Link>
+            
+            {isAuthenticated ? (
+              <>
+                <Link to="/account">
+                  <Button variant="ghost" size="icon">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </Link>
+                <Button variant="ghost" size="icon" onClick={handleLogout} title="Logout">
+                  <LogOut className="h-5 w-5" />
+                </Button>
+              </>
+            ) : (
+              <Link to="/login">
+                <Button variant="default" size="sm">
+                  Login
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </header>
